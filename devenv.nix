@@ -17,6 +17,15 @@ in
     scripts = {
       run.exec = "go run ./cmd/remote";
       dev.exec = "watch -x run";
+      build.exec = "go build ./cmd/remote";
+      fmt.exec = "gofmt -w .";
+      check.exec = ''
+        test -z "$(gofmt -l .)"
+        go vet ./...
+        staticcheck ./...
+        go test ./...
+      '';
+
     };
 
     outputs = {
