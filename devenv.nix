@@ -18,5 +18,14 @@ in
       run.exec = "go run ./cmd/remote";
       dev.exec = "watch -x run";
     };
-    env = {};
+
+    outputs = {
+      remote = pkgs.buildGoModule {
+        pname = "remote";
+        version = "0.1.0";
+        src = lib.cleanSource ./.;
+        vendorHash = null;
+        subPackages = [ "cmd/remote" ];
+      };
+    };
   }
