@@ -47,7 +47,7 @@ func (c *Codex) Capture(ctx context.Context, pane tmux.PaneID) (string, error) {
 
 func (c *Codex) Prompt(ctx context.Context, pane tmux.PaneID, prompt string) error {
 	if strings.TrimSpace(prompt) == "" {
-		return fmt.Errorf("bad prompt")
+		return ErrBadPrompt
 	}
 
 	if err := c.validatePane(ctx, pane); err != nil {
@@ -62,6 +62,7 @@ func (c *Codex) Prompt(ctx context.Context, pane tmux.PaneID, prompt string) err
 }
 
 var ErrPaneNotFound = errors.New("pane not found")
+var ErrBadPrompt = errors.New("bad prompt")
 
 func (c *Codex) validatePane(ctx context.Context, pane tmux.PaneID) error {
 	panes, err := c.listPanes(ctx)
