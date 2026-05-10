@@ -7,6 +7,7 @@ in
       [
         git
         watch
+        tmux
         pkgs-unstable.codex
       ];
 
