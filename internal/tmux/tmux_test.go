@@ -82,12 +82,12 @@ func TestListPanes(t *testing.T) {
 	}
 
 	pane := panes[0]
-	if pane.Id != "%0" {
-		t.Fatalf("ListPanes()[0].Id = %q, want %%0", pane.Id)
+	if pane.ID != "%0" {
+		t.Fatalf("ListPanes()[0].Id = %q, want %%0", pane.ID)
 	}
 
-	if pane.PID == "" {
-		t.Fatal("ListPanes()[0].PID is empty")
+	if pane.PID == 0 {
+		t.Fatal("ListPanes()[0].PID is zero")
 	}
 
 	if pane.Cmd == "" {

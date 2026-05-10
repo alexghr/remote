@@ -11,4 +11,4 @@ in
   \"github:\${nixpkgs.owner}/\${nixpkgs.repo}/\${nixpkgs.rev}\"
 ")
 
-nix run "$NIXPKGS_REF#devenv" -- "$@"
+exec nix run "$NIXPKGS_REF#devenv" -- "$@"

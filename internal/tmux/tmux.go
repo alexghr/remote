@@ -25,12 +25,13 @@ func New(bin, socket string) (*Tmux, error) {
 type PaneId string
 
 type Pane struct {
-	Id                   PaneId
-	Title, PID, Cmd, Cwd string
+	ID                   PaneId
+	PID                  int
+	Title, Cmd, Cwd, TTY string
 }
 
 func (t *Tmux) ListPanes(ctx context.Context, session SessionID) ([]Pane, error) {
-	format := []string{"#{pane_id}", "#{pane_title}", "#{pane_pid}", "#{pane_current_command}", "#{pane_current_path}"}
+	format := []string{"#{pane_id}", "#{pane_pid}", "#{pane_title}", "#{pane_current_command}", "#{pane_current_path}", "#{pane_tty}"}
 	out, err := t.run(
 		ctx,
 		"list-panes",
@@ -53,7 +54,12 @@ func (t *Tmux) ListPanes(ctx context.Context, session SessionID) ([]Pane, error)
 		if len(parts) != len(format) {
 			return nil, fmt.Errorf("parse pane: %s", line)
 		}
-		panes = append(panes, Pane{Id: PaneId(parts[0]), Title: parts[1], PID: parts[2], Cmd: parts[3], Cwd: parts[4]})
+		pid, err := strconv.ParseInt(parts[1], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("parse pane pid: %w: %s", err, line)
+		}
+
+		panes = append(panes, Pane{ID: PaneId(parts[0]), PID: int(pid), Title: parts[2], Cmd: parts[3], Cwd: parts[4], TTY: parts[5]})
 	}
 
 	return panes, nil
