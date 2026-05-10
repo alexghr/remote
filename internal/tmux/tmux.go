@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -74,6 +75,46 @@ func (t *Tmux) ListSessions(ctx context.Context) ([]Session, error) {
 	}
 
 	return sessions, nil
+}
+
+func (t *Tmux) Capture(ctx context.Context, pane PaneId) (string, error) {
+	out, err := t.run(
+		ctx,
+		"capture-pane",
+		"-t",
+		string(pane),
+		"-p", // paste to stdout
+		"-S",
+		"-", // start of pane
+		"-E",
+		"-", // end of pane
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("capture: %w", err)
+	}
+
+	return out, nil
+}
+
+func (t *Tmux) CaptureRegion(ctx context.Context, pane PaneId, start, end int) (string, error) {
+	out, err := t.run(
+		ctx,
+		"capture-pane",
+		"-t",
+		string(pane),
+		"-p", // paste to stdout
+		"-S",
+		strconv.FormatInt(int64(start), 10),
+		"-E",
+		strconv.FormatInt(int64(end), 10),
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("capture region: %w", err)
+	}
+
+	return out, nil
 }
 
 func (t *Tmux) Writeln(ctx context.Context, pane PaneId, keys string) error {
