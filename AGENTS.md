@@ -25,8 +25,8 @@ First off check if you are inside the Nix dev shell or enter using the helper `.
 
 - Build Go: `build`
 - Build production package: `./devenv build --quiet outputs.remote`
-- Test, lint and check format: `check`
-- Format: `fmt`
+- Test, lint and check format in one command: `check`
+- Format files: `fmt`
 - Run locally: `run` and `dev` to watch src files and re-run the binary
 
 If you are outside the devenv shell then you can enter it and invoke a script using
@@ -49,5 +49,4 @@ I repeat: *do not edit* any of the files in the project without explicit permiss
 
 ## Gotchas
 
-The tmux test I wrote fails because it tries to open a temp tmux session. I suspect it's because tmux wants a PTY.
-You can ignore tests for now and the `check` helper script as it is expected to fail.
+N/A

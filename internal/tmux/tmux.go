@@ -1,6 +1,7 @@
 package tmux
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -110,14 +111,32 @@ func (t *Tmux) sendKeys(ctx context.Context, pane PaneId, literal bool, keys str
 	return nil
 }
 
+type runError struct {
+	op     string
+	args   []string
+	stderr string
+	err    error
+}
+
+func (e *runError) Error() string {
+	return fmt.Sprintf("tmux %s: %s: stderr: %s", e.op, e.err, e.stderr)
+}
+
+func (e *runError) Unwrap() error {
+	return e.err
+}
+
 func (t *Tmux) run(ctx context.Context, op string, args ...string) (string, error) {
 	cmdArgs := append([]string{"-S", t.socket, op}, args...)
 	cmd := exec.CommandContext(ctx, t.bin, cmdArgs...)
 
-	out, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("tmux %s: %w", op, err)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", &runError{op: op, args: cmdArgs, stderr: stderr.String(), err: err}
 	}
 
-	return string(out), nil
+	return stdout.String(), nil
 }

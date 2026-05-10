@@ -3,8 +3,9 @@ package tmux
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"testing"
 )
@@ -14,20 +15,19 @@ type tempTmux struct {
 }
 
 func newTempTmux() (*tempTmux, error) {
-	id := rand.Int()
-	socket := fmt.Sprintf("tmux_test_%d", id)
-	cmd := exec.Command("tmux", "-L", socket, "new")
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("start test tmux: %w", err)
+	socket := filepath.Join(os.TempDir(), fmt.Sprintf("tmux_test_%d.sock", os.Getpid()))
+	cmd := exec.Command("tmux", "-S", socket, "new-session", "-d")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("start test tmux: %w: %s", err, string(out))
 	}
 
 	return &tempTmux{socket}, nil
 }
 
 func (t *tempTmux) close() error {
-	cmd := exec.Command("tmux", "-L", t.socket, "kill-session")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("kill test tmux: %w", err)
+	cmd := exec.Command("tmux", "-S", t.socket, "kill-session")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("kill test tmux: %w: %s", err, string(out))
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func TestListSessions(t *testing.T) {
 		t.Fatalf("ListSessions unexpected error: %s", err)
 	}
 
-	expected := []Session{Session{Id: "%0", Name: "0"}}
+	expected := []Session{{Id: "$0", Name: "0"}}
 
 	if !slices.Equal(sessions, expected) {
 		t.Fatalf("ListSessions() = %+v, want %+v", sessions, expected)

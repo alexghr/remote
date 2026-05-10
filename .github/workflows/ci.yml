@@ -17,6 +17,10 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: Test
+        run: |
+          ./devenv shell --quiet --no-reload -- check
+
       - name: Build
         id: build
         run: |
