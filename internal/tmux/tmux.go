@@ -29,9 +29,17 @@ type Pane struct {
 	Title, PID, Cmd, Cwd string
 }
 
-func (t *Tmux) ListPanes(ctx context.Context) ([]Pane, error) {
+func (t *Tmux) ListPanes(ctx context.Context, session SessionID) ([]Pane, error) {
 	format := []string{"#{pane_id}", "#{pane_title}", "#{pane_pid}", "#{pane_current_command}", "#{pane_current_path}"}
-	out, err := t.run(ctx, "list-panes", "-F", strings.Join(format, sep))
+	out, err := t.run(
+		ctx,
+		"list-panes",
+		"-s", // search by session
+		"-t", // target session
+		string(session),
+		"-F",
+		strings.Join(format, sep),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list-panes: %w", err)
 	}
@@ -51,8 +59,11 @@ func (t *Tmux) ListPanes(ctx context.Context) ([]Pane, error) {
 	return panes, nil
 }
 
+type SessionID string
+
 type Session struct {
-	Id, Name string
+	ID   SessionID
+	Name string
 }
 
 func (t *Tmux) ListSessions(ctx context.Context) ([]Session, error) {
@@ -71,7 +82,7 @@ func (t *Tmux) ListSessions(ctx context.Context) ([]Session, error) {
 		if len(parts) != len(format) {
 			return nil, fmt.Errorf("parse session: %s", line)
 		}
-		sessions = append(sessions, Session{Id: parts[0], Name: parts[1]})
+		sessions = append(sessions, Session{ID: SessionID(parts[0]), Name: parts[1]})
 	}
 
 	return sessions, nil

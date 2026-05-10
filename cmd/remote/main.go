@@ -22,5 +22,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(ss)
+	panes, err := t.ListPanes(context.Background(), ss[0].ID)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("%v\n", panes)
 }

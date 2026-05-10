@@ -51,7 +51,7 @@ func TestListSessions(t *testing.T) {
 		t.Fatalf("ListSessions unexpected error: %s", err)
 	}
 
-	expected := []Session{{Id: "$0", Name: "0"}}
+	expected := []Session{{ID: "$0", Name: "0"}}
 
 	if !slices.Equal(sessions, expected) {
 		t.Fatalf("ListSessions() = %+v, want %+v", sessions, expected)
@@ -72,7 +72,7 @@ func TestListPanes(t *testing.T) {
 		t.Fatalf("New unexpected error: %s", err)
 	}
 
-	panes, err := client.ListPanes(context.Background())
+	panes, err := client.ListPanes(context.Background(), "0")
 	if err != nil {
 		t.Fatalf("ListPanes unexpected error: %s", err)
 	}
