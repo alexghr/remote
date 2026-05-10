@@ -22,22 +22,20 @@ func New(bin, socket string) (*Tmux, error) {
 	return &Tmux{bin: bin, socket: socket, delay: 150 * time.Millisecond}, nil
 }
 
-type PaneId string
+type PaneID string
 
 type Pane struct {
-	ID                   PaneId
+	ID                   PaneID
 	PID                  int
 	Title, Cmd, Cwd, TTY string
 }
 
-func (t *Tmux) ListPanes(ctx context.Context, session SessionID) ([]Pane, error) {
+func (t *Tmux) ListPanes(ctx context.Context) ([]Pane, error) {
 	format := []string{"#{pane_id}", "#{pane_pid}", "#{pane_title}", "#{pane_current_command}", "#{pane_current_path}", "#{pane_tty}"}
 	out, err := t.run(
 		ctx,
 		"list-panes",
-		"-s", // search by session
-		"-t", // target session
-		string(session),
+		"-a", // all sessions
 		"-F",
 		strings.Join(format, sep),
 	)
@@ -59,7 +57,7 @@ func (t *Tmux) ListPanes(ctx context.Context, session SessionID) ([]Pane, error)
 			return nil, fmt.Errorf("parse pane pid: %w: %s", err, line)
 		}
 
-		panes = append(panes, Pane{ID: PaneId(parts[0]), PID: int(pid), Title: parts[2], Cmd: parts[3], Cwd: parts[4], TTY: parts[5]})
+		panes = append(panes, Pane{ID: PaneID(parts[0]), PID: int(pid), Title: parts[2], Cmd: parts[3], Cwd: parts[4], TTY: parts[5]})
 	}
 
 	return panes, nil
@@ -94,7 +92,7 @@ func (t *Tmux) ListSessions(ctx context.Context) ([]Session, error) {
 	return sessions, nil
 }
 
-func (t *Tmux) Capture(ctx context.Context, pane PaneId) (string, error) {
+func (t *Tmux) Capture(ctx context.Context, pane PaneID) (string, error) {
 	out, err := t.run(
 		ctx,
 		"capture-pane",
@@ -114,7 +112,7 @@ func (t *Tmux) Capture(ctx context.Context, pane PaneId) (string, error) {
 	return out, nil
 }
 
-func (t *Tmux) CaptureRegion(ctx context.Context, pane PaneId, start, end int) (string, error) {
+func (t *Tmux) CaptureRange(ctx context.Context, pane PaneID, start, end int) (string, error) {
 	out, err := t.run(
 		ctx,
 		"capture-pane",
@@ -134,7 +132,7 @@ func (t *Tmux) CaptureRegion(ctx context.Context, pane PaneId, start, end int) (
 	return out, nil
 }
 
-func (t *Tmux) Writeln(ctx context.Context, pane PaneId, keys string) error {
+func (t *Tmux) Writeln(ctx context.Context, pane PaneID, keys string) error {
 	if err := t.sendKeys(ctx, pane, true, keys); err != nil {
 		return fmt.Errorf("write literal: %w", err)
 	}
@@ -152,7 +150,7 @@ func (t *Tmux) Writeln(ctx context.Context, pane PaneId, keys string) error {
 	return nil
 }
 
-func (t *Tmux) sendKeys(ctx context.Context, pane PaneId, literal bool, keys string) error {
+func (t *Tmux) sendKeys(ctx context.Context, pane PaneID, literal bool, keys string) error {
 	args := []string{"-t", string(pane)}
 
 	if literal {

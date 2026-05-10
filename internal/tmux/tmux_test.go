@@ -72,7 +72,7 @@ func TestListPanes(t *testing.T) {
 		t.Fatalf("New unexpected error: %s", err)
 	}
 
-	panes, err := client.ListPanes(context.Background(), "0")
+	panes, err := client.ListPanes(context.Background())
 	if err != nil {
 		t.Fatalf("ListPanes unexpected error: %s", err)
 	}
