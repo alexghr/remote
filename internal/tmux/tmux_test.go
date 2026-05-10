@@ -41,7 +41,7 @@ func TestListSessions(t *testing.T) {
 
 	defer tm.close()
 
-	client, err := New("tmux", tm.socket);
+	client, err := New("tmux", tm.socket)
 	if err != nil {
 		t.Fatalf("New unexpected error: %s", err)
 	}
@@ -51,7 +51,7 @@ func TestListSessions(t *testing.T) {
 		t.Fatalf("ListSessions unexpected error: %s", err)
 	}
 
-	expected := []Session {Session { Id: "%0", Name: "0" }}
+	expected := []Session{Session{Id: "%0", Name: "0"}}
 
 	if !slices.Equal(sessions, expected) {
 		t.Fatalf("ListSessions() = %+v, want %+v", sessions, expected)

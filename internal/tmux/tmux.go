@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 var sep = "\x1f"
@@ -12,19 +13,23 @@ var sep = "\x1f"
 type Tmux struct {
 	bin    string
 	socket string
+	delay  time.Duration
 }
 
 func New(bin, socket string) (*Tmux, error) {
-	return &Tmux{bin, socket}, nil
+	return &Tmux{bin: bin, socket: socket, delay: 150 * time.Millisecond}, nil
 }
 
+type PaneId string
+
 type Pane struct {
-	Id, Title, PID, Cmd, Cwd string
+	Id                   PaneId
+	Title, PID, Cmd, Cwd string
 }
 
 func (t *Tmux) ListPanes(ctx context.Context) ([]Pane, error) {
-	format := []string{"#{pane_id}", "#{pane_title}", "#{pid}", "#{pane_current_command}", "#{pane_current_path}"}
-	out, err := runCmd(t.bin, t.withDefaults("list-panes", "-F", strings.Join(format, sep))...)
+	format := []string{"#{pane_id}", "#{pane_title}", "#{pane_pid}", "#{pane_current_command}", "#{pane_current_path}"}
+	out, err := t.run(ctx, "list-panes", "-F", strings.Join(format, sep))
 	if err != nil {
 		return nil, fmt.Errorf("list-panes: %w", err)
 	}
@@ -38,7 +43,7 @@ func (t *Tmux) ListPanes(ctx context.Context) ([]Pane, error) {
 		if len(parts) != len(format) {
 			return nil, fmt.Errorf("parse pane: %s", line)
 		}
-		panes = append(panes, Pane{Id: parts[0], Title: parts[1], PID: parts[2], Cmd: parts[3], Cwd: parts[4]})
+		panes = append(panes, Pane{Id: PaneId(parts[0]), Title: parts[1], PID: parts[2], Cmd: parts[3], Cwd: parts[4]})
 	}
 
 	return panes, nil
@@ -50,7 +55,7 @@ type Session struct {
 
 func (t *Tmux) ListSessions(ctx context.Context) ([]Session, error) {
 	format := []string{"#{session_id}", "#{session_name}"}
-	out, err := runCmd(t.bin, t.withDefaults("list-sessions", "-F", strings.Join(format, sep))...)
+	out, err := t.run(ctx, "list-sessions", "-F", strings.Join(format, sep))
 	if err != nil {
 		return nil, fmt.Errorf("list-sessions: %w", err)
 	}
@@ -70,20 +75,48 @@ func (t *Tmux) ListSessions(ctx context.Context) ([]Session, error) {
 	return sessions, nil
 }
 
-func (t *Tmux) withDefaults(args ...string) []string {
-	finalArgs := make([]string, 0, len(args)+2)
-	finalArgs = append(finalArgs, "-S", t.socket)
-	finalArgs = append(finalArgs, args...)
+func (t *Tmux) Writeln(ctx context.Context, pane PaneId, keys string) error {
+	if err := t.sendKeys(ctx, pane, true, keys); err != nil {
+		return fmt.Errorf("write literal: %w", err)
+	}
 
-	return finalArgs
+	select {
+	case <-time.After(t.delay):
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	if err := t.sendKeys(ctx, pane, false, "Enter"); err != nil {
+		return fmt.Errorf("write <Enter>: %w", err)
+	}
+
+	return nil
 }
 
-func runCmd(bin string, args ...string) (string, error) {
-	cmd := exec.Command(bin, args...)
+func (t *Tmux) sendKeys(ctx context.Context, pane PaneId, literal bool, keys string) error {
+	args := []string{"-t", string(pane)}
+
+	if literal {
+		args = append(args, "-l")
+	}
+
+	args = append(args, keys)
+
+	_, err := t.run(ctx, "send-keys", args...)
+
+	if err != nil {
+		return fmt.Errorf("send-keys: %w", err)
+	}
+	return nil
+}
+
+func (t *Tmux) run(ctx context.Context, op string, args ...string) (string, error) {
+	cmdArgs := append([]string{"-S", t.socket, op}, args...)
+	cmd := exec.CommandContext(ctx, t.bin, cmdArgs...)
 
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("cmd run: %w", err)
+		return "", fmt.Errorf("tmux %s: %w", op, err)
 	}
 
 	return string(out), nil
