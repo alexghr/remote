@@ -10,6 +10,7 @@ import (
 	"github.com/alexghr/remote/internal/codex"
 	"github.com/alexghr/remote/internal/process"
 	"github.com/alexghr/remote/internal/tmux"
+	"github.com/alexghr/remote/internal/web"
 )
 
 func main() {
@@ -27,10 +28,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	addr := "127.0.0.1:8080"
+	addr := os.Getenv("REMOTE_ADDR")
+	if addr == "" {
+		addr = "127.0.0.1:8080"
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/api/", api.New(c))
+	mux.Handle("/", web.New())
+
 	server := &http.Server{
 		Addr:    addr,
-		Handler: api.New(c),
+		Handler: mux,
 	}
 
 	fmt.Fprintf(os.Stderr, "listening on http://%s\n", addr)

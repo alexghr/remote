@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Remote Control</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="app">
+    <aside class="sidebar" aria-label="Panes">
+      <div class="sidebar-header">
+        <h1>Remote</h1>
+        <button id="refresh-panes" class="icon-button" type="button" title="Refresh panes" aria-label="Refresh panes">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M20 6v5h-5"></path>
+            <path d="M4 18v-5h5"></path>
+            <path d="M6.1 9a7 7 0 0 1 11.5-2.6L20 8.7"></path>
+            <path d="M17.9 15a7 7 0 0 1-11.5 2.6L4 15.3"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="pane-list" class="pane-list" role="listbox" aria-label="Codex panes"></div>
+    </aside>
+
+    <section class="workspace" aria-label="Selected pane">
+      <header class="toolbar">
+        <div>
+          <p class="eyebrow">Pane</p>
+          <h2 id="pane-title">No pane selected</h2>
+        </div>
+        <div class="toolbar-actions">
+          <label class="poll-toggle">
+            <input id="auto-refresh" type="checkbox" checked>
+            <span>Auto</span>
+          </label>
+          <button id="refresh-content" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <pre id="capture" class="terminal" aria-live="polite">Loading panes...</pre>
+
+      <form id="prompt-form" class="prompt-form">
+        <textarea id="prompt" name="prompt" rows="4" placeholder="Send a prompt to the selected pane"></textarea>
+        <div class="prompt-actions">
+          <p id="status" class="status" role="status"></p>
+          <button id="send" type="submit">Send</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
