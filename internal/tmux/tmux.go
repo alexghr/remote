@@ -150,6 +150,21 @@ func (t *Tmux) Writeln(ctx context.Context, pane PaneID, keys string) error {
 	return nil
 }
 
+func (t *Tmux) SendKeys(ctx context.Context, pane PaneID, keys ...string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	args := []string{"-t", string(pane)}
+	args = append(args, keys...)
+
+	if _, err := t.run(ctx, "send-keys", args...); err != nil {
+		return fmt.Errorf("send-keys: %w", err)
+	}
+
+	return nil
+}
+
 func (t *Tmux) sendKeys(ctx context.Context, pane PaneID, literal bool, keys string) error {
 	args := []string{"-t", string(pane)}
 

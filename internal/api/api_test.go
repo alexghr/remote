@@ -93,6 +93,45 @@ func TestPromptInvalidJSON(t *testing.T) {
 	}
 }
 
+func TestSendKeys(t *testing.T) {
+	service := &fakeCodex{}
+	server := httptest.NewServer(New(service))
+	defer server.Close()
+
+	resp, err := http.Post(server.URL+"/api/codex/panes/%2512/keys", "application/json", strings.NewReader(`{"keys":["Down","Enter"]}`))
+	if err != nil {
+		t.Fatalf("POST keys: %s", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+
+	if service.keyedPane != "%12" {
+		t.Fatalf("keyed pane = %q, want %%12", service.keyedPane)
+	}
+
+	if got, want := strings.Join(service.keys, ","), "Down,Enter"; got != want {
+		t.Fatalf("keys = %q, want %q", got, want)
+	}
+}
+
+func TestSendKeysInvalidJSON(t *testing.T) {
+	server := httptest.NewServer(New(&fakeCodex{}))
+	defer server.Close()
+
+	resp, err := http.Post(server.URL+"/api/codex/panes/%2512/keys", "application/json", strings.NewReader(`{`))
+	if err != nil {
+		t.Fatalf("POST keys: %s", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusBadRequest)
+	}
+}
+
 func TestCodexErrors(t *testing.T) {
 	tests := []struct {
 		name string
@@ -101,6 +140,7 @@ func TestCodexErrors(t *testing.T) {
 	}{
 		{name: "pane not found", err: codex.ErrPaneNotFound, want: http.StatusNotFound},
 		{name: "bad prompt", err: codex.ErrBadPrompt, want: http.StatusBadRequest},
+		{name: "bad keys", err: codex.ErrBadKeys, want: http.StatusBadRequest},
 		{name: "internal", err: errors.New("boom"), want: http.StatusInternalServerError},
 	}
 
@@ -133,6 +173,10 @@ type fakeCodex struct {
 	promptedPane tmux.PaneID
 	prompt       string
 	promptErr    error
+
+	keyedPane tmux.PaneID
+	keys      []string
+	keyErr    error
 }
 
 func (f *fakeCodex) ListPanes(ctx context.Context) ([]codex.CodexPane, error) {
@@ -148,4 +192,10 @@ func (f *fakeCodex) Prompt(ctx context.Context, pane tmux.PaneID, prompt string)
 	f.promptedPane = pane
 	f.prompt = prompt
 	return f.promptErr
+}
+
+func (f *fakeCodex) SendKeys(ctx context.Context, pane tmux.PaneID, keys []string) error {
+	f.keyedPane = pane
+	f.keys = keys
+	return f.keyErr
 }

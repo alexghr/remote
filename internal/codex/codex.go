@@ -61,8 +61,40 @@ func (c *Codex) Prompt(ctx context.Context, pane tmux.PaneID, prompt string) err
 	return nil
 }
 
+func (c *Codex) SendKeys(ctx context.Context, pane tmux.PaneID, keys []string) error {
+	if len(keys) == 0 {
+		return ErrBadKeys
+	}
+
+	for _, key := range keys {
+		if !allowedKey(key) {
+			return ErrBadKeys
+		}
+	}
+
+	if err := c.validatePane(ctx, pane); err != nil {
+		return err
+	}
+
+	if err := c.tmux.SendKeys(ctx, pane, keys...); err != nil {
+		return fmt.Errorf("codex send keys: %w", err)
+	}
+
+	return nil
+}
+
 var ErrPaneNotFound = errors.New("pane not found")
 var ErrBadPrompt = errors.New("bad prompt")
+var ErrBadKeys = errors.New("bad keys")
+
+func allowedKey(key string) bool {
+	switch key {
+	case "Up", "Down", "Enter", "Escape", "Tab":
+		return true
+	default:
+		return false
+	}
+}
 
 func (c *Codex) validatePane(ctx context.Context, pane tmux.PaneID) error {
 	panes, err := c.listPanes(ctx)
