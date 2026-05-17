@@ -60,7 +60,7 @@ func LoadCertificate(dir string, role Role) (*Certificate, error) {
 
 func (c *Certificate) Fingerprint() string {
 	if c.cert.Leaf == nil {
-		panic(fmt.Sprintf("certificate leaf is nil"))
+		panic("certificate leaf is nil")
 	}
 
 	return hashCert(c.cert.Leaf)
@@ -102,7 +102,7 @@ func (c *Certificate) storeCert(dir string) error {
 		return fmt.Errorf("missing private key")
 	}
 
-  // if the user has changed file perms, we respect those
+	// if the user has changed file perms, we respect those
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("create parent folder: %w", err)
 	}

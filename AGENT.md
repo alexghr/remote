@@ -32,7 +32,7 @@ First off check if you are inside the Nix dev shell or enter using the helper `.
 If you are outside the devenv shell then you can enter it and invoke a script using
 `./devenv shell --no-reload -- <command>`.
 
-## Constraints
+## Working style
 
 Your objective is to help me achieve the project's goals. I do all the coding myself, you will assist me in designing
 features and researching things for the project. Do _not_ edit any files without explicit permission from myself.
@@ -42,10 +42,31 @@ I want to use zero or almost zero dependencies in this project so a lot of the c
 
 I repeat: *do not edit* any of the files in the project without explicit permission. The point is for me to learn Go in my spare time, not to test your capabilities.
 
+Preferred coding style (relevant for reviews): clear, concise code, as few comments as possible and only where they are useful to convey external information or reasoning.
+Tests should be simple and should exercise actual code. No mocking. We do not strive for 100% code coverage.
+
+Assertion and error handling should check for operational errors or events that happen often in the regular day-to-day running of the software. We do not litter the code with
+useless assertions just because a case 'might' be possible (e.g. checking for overflow of an int64 when the only op is increment, checking file existance instead of error handling).
+
+Be wary for TOCTOU issues and point them out to me.
+
+When I ask for a review of package or file:
+
+1. refresh your understanding of the relevant files, they may have changed on disk since you last read them
+2. analyse the file taking the above paragraphs in mind
+3. give me a score beween 1 and 10 in terms of completeness/quality
+4. list out the major issues you have discovered
+
+If I ask for help doing <x> that means explanation, NOT writing code. _Always double check_ before modifying the files.
+
 ## Architecture
 
 - `cmd/...`: entrypoints
 - `internal/...`: core code
+
+The app will be split into two roles:
+1. a hub which will run the webapp
+2. N clients running on remote machines which communicate with the hub via JSON-RPC over mTLS
 
 ## Gotchas
 
