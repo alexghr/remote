@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"slices"
 )
 
@@ -25,18 +26,21 @@ func NewClient(addr string, cert tls.Certificate, pin string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Start(ctx context.Context) error {
+func (c *Client) Dial(ctx context.Context) (net.Conn, error) {
 	dialer := tls.Dialer{Config: c.config}
 	conn, err := dialer.DialContext(ctx, "tcp", c.addr)
 	if err != nil {
-		return fmt.Errorf("dial: %w", err)
+		return nil, fmt.Errorf("dial: %w", err)
 	}
 
-	defer conn.Close()
-	return nil
+	return conn, nil
 }
 
 func clientTLSConfig(cert tls.Certificate, hubCertPin string) (*tls.Config, error) {
+	if cert.Leaf == nil {
+		return nil, fmt.Errorf("certificate leaf missing")
+	}
+
 	if !slices.Contains(cert.Leaf.ExtKeyUsage, x509.ExtKeyUsageClientAuth) {
 		return nil, fmt.Errorf("invalid client cert key usage %v", cert.Leaf.ExtKeyUsage)
 	}
