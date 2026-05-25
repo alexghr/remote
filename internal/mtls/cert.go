@@ -147,4 +147,3 @@ func newCert(usage x509.ExtKeyUsage) (tls.Certificate, error) {
 
 	return cert, nil
 }
-
