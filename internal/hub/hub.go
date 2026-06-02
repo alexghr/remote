@@ -91,6 +91,10 @@ func (h *Hub) Fingerprint() string {
 	return h.tls.Fingerprint()
 }
 
+func (h *Hub) Addr() string {
+	return h.tls.Addr()
+}
+
 func (h *Hub) Start(ctx context.Context) {
 	h.logger.Info("Starting TLS server", "addr", h.tls.Addr())
 	defer h.logger.Info("Stopping TLS server")
