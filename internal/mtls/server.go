@@ -20,12 +20,17 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	addr     string
-	listener net.Listener
-	config   ServerConfig
+	listener    net.Listener
+	config      ServerConfig
+	fingerprint string
 }
 
 func NewServer(addr string, cert tls.Certificate) (*Server, error) {
+	fingerprint, err := X509CertificateFingerprint(cert.Leaf)
+	if err != nil {
+		return nil, fmt.Errorf("certificate pin: %w", err)
+	}
+
 	tlsConfig, err := serverTLSConfig(cert)
 	if err != nil {
 		return nil, fmt.Errorf("server tls config: %w", err)
@@ -37,12 +42,20 @@ func NewServer(addr string, cert tls.Certificate) (*Server, error) {
 	}
 
 	return &Server{
-		addr:     addr,
-		listener: listener,
+		listener:    listener,
+		fingerprint: fingerprint,
 		config: ServerConfig{
 			HandshakeTimeout: 1 * time.Second,
 		},
 	}, nil
+}
+
+func (s *Server) Addr() string {
+	return s.listener.Addr().String()
+}
+
+func (s *Server) Fingerprint() string {
+	return s.fingerprint
 }
 
 func (s *Server) Close() error {
